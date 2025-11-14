@@ -99,20 +99,27 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- INÍCIO DA MUDANÇA (CORS) ---
-# Esta é a configuração final e segura.
+# --- INÍCIO DA MUDANÇA (CORS e CSRF) ---
+# Lista de quem pode fazer chamadas de API
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173', # Para seu desenvolvimento local
 ]
 
-# 1. Adiciona a URL do próprio backend (Render) à lista
+# Lista de quem pode enviar formulários (como o login do Admin)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173', # Para seu desenvolvimento local
+]
+
+# 1. Adiciona a URL do próprio backend (Render) às duas listas
 if RENDER_EXTERNAL_HOSTNAME:
     CORS_ALLOWED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}") # <<< CORREÇÃO
 
-# 2. Adiciona a URL do seu frontend (Netlify) a partir de uma variável de ambiente
+# 2. Adiciona a URL do seu frontend (Netlify) às duas listas
 NETLIFY_URL = os.environ.get('NETLIFY_URL')
 if NETLIFY_URL:
     CORS_ALLOWED_ORIGINS.append(NETLIFY_URL)
+    CSRF_TRUSTED_ORIGINS.append(NETLIFY_URL) # <<< CORREÇÃO
 # --- FIM DA MUDANÇA ---
 
 
