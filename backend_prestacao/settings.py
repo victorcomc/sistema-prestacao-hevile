@@ -127,23 +127,24 @@ REST_FRAMEWORK = {
 
 AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_PROJECT_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
-
-# --- INÍCIO DA CORREÇÃO ---
-# O nome do bucket NÃO PODE ter espaços.
-# Certifique-se de que seu bucket no Supabase se chama 'uploads'
 AWS_STORAGE_BUCKET_NAME = 'uploads'
-# --- FIM DA CORREÇÃO ---
-
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co'
 AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1'
+
+# --- INÍCIO DA CORREÇÃO (Erro 500 no Upload) ---
+# Adiciona a Região (o Supabase usa a região 'us-west-2' do seu pooler)
+AWS_S3_REGION_NAME = 'us-west-2'
+# --- FIM DA CORREÇÃO ---
 
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
             "endpoint_url": AWS_S3_ENDPOINT_URL,
-            "access_key": AWS_ACCESS_KEY_ID,
-            "secret_key": AWS_SECRET_ACCESS_KEY,
+            # --- INÍCIO DA CORREÇÃO (Nomes das Chaves) ---
+            "aws_access_key_id": AWS_ACCESS_KEY_ID,     # <- Estava 'access_key'
+            "aws_secret_access_key": AWS_SECRET_ACCESS_KEY, # <- Estava 'secret_key'
+            # --- FIM DA CORREÇÃO ---
             "bucket_name": AWS_STORAGE_BUCKET_NAME,
         },
     },
@@ -152,7 +153,4 @@ STORAGES = {
     },
 }
 
-# --- INÍCIO DA CORREÇÃO ---
-# A URL de mídia também deve usar o nome correto do bucket
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1/object/public/uploads/'
-# --- FIM DA CORREÇÃO ---
