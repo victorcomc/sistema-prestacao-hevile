@@ -131,9 +131,8 @@ AWS_STORAGE_BUCKET_NAME = 'uploads'
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co'
 AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1'
 
-# --- INÍCIO DA CORREÇÃO (Erro 500 no Upload) ---
-# Adiciona a Região (o Supabase usa a região 'us-west-2' do seu pooler)
-AWS_S3_REGION_NAME = 'us-west-2'
+# --- INÍCIO DA CORREÇÃO ---
+# A linha AWS_S3_REGION_NAME foi REMOVIDA.
 # --- FIM DA CORREÇÃO ---
 
 STORAGES = {
@@ -141,10 +140,8 @@ STORAGES = {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
             "endpoint_url": AWS_S3_ENDPOINT_URL,
-            # --- INÍCIO DA CORREÇÃO (Nomes das Chaves) ---
-            "aws_access_key_id": AWS_ACCESS_KEY_ID,     # <- Estava 'access_key'
-            "aws_secret_access_key": AWS_SECRET_ACCESS_KEY, # <- Estava 'secret_key'
-            # --- FIM DA CORREÇÃO ---
+            "aws_access_key_id": AWS_ACCESS_KEY_ID,
+            "aws_secret_access_key": AWS_SECRET_ACCESS_KEY,
             "bucket_name": AWS_STORAGE_BUCKET_NAME,
         },
     },
