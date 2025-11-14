@@ -63,6 +63,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend_prestacao.wsgi.application'
 
+# Bloco original para colar de volta
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
