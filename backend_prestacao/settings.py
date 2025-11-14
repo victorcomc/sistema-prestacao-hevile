@@ -25,19 +25,20 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'whitenoise.runserver_nostatic', # Adicionado para servir estáticos
+    'whitenoise.runserver_nostatic', 
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'core',
+    'storages', # <<< 1. ADICIONADO
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Adicionado
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware', # Movido para cima
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -90,38 +91,31 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# --- Arquivos Estáticos (CSS do Admin) ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# --- Arquivos de Mídia (Uploads de Usuário) ---
+# (MEDIA_ROOT foi REMOVIDO)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- INÍCIO DA MUDANÇA (CORS e CSRF) ---
-# Lista de quem pode fazer chamadas de API
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173', # Para seu desenvolvimento local
+    'http://localhost:5173', 
 ]
-
-# Lista de quem pode enviar formulários (como o login do Admin)
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5173', # Para seu desenvolvimento local
+    'http://localhost:5173',
 ]
 
-# 1. Adiciona a URL do próprio backend (Render) às duas listas
 if RENDER_EXTERNAL_HOSTNAME:
     CORS_ALLOWED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}") # <<< CORREÇÃO
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
-# 2. Adiciona a URL do seu frontend (Netlify) às duas listas
 NETLIFY_URL = os.environ.get('NETLIFY_URL')
 if NETLIFY_URL:
     CORS_ALLOWED_ORIGINS.append(NETLIFY_URL)
-    CSRF_TRUSTED_ORIGINS.append(NETLIFY_URL) # <<< CORREÇÃO
-# --- FIM DA MUDANÇA ---
-
+    CSRF_TRUSTED_ORIGINS.append(NETLIFY_URL)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -132,3 +126,34 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated', 
     ]
 }
+
+# --- INÍCIO DA MUDANÇA (ARMAZENAMENTO DE MÍDIA - SUPABASE S3) ---
+
+# 1. Configurações de chaves (lidas do Render)
+AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_PROJECT_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
+
+# 2. Configurações do Bucket
+AWS_STORAGE_BUCKET_NAME = 'uploads' # O nome do bucket que você criou
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co' # O host do seu Supabase
+AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1'
+
+# 3. Configuração do Django Storages
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "endpoint_url": AWS_S3_ENDPOINT_URL,
+            "access_key": AWS_ACCESS_KEY_ID,
+            "secret_key": AWS_SECRET_ACCESS_KEY,
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+        },
+    },
+    "staticfiles": { # (Mantemos o whitenoise para os estáticos)
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# 4. URL de Mídia (para onde as imagens vão apontar)
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/'
+# --- FIM DA MUDANÇA ---
