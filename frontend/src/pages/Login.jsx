@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Importe o axios direto
+// import axios from 'axios'; // <<< 1. REMOVIDO
 import api from '../services/api'; // Precisamos dele para configurar o token E chamar o 'me'
 import { Container, Paper, TextField, Button, Typography, Box, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -17,40 +17,35 @@ function Login() {
         setError('');
 
         try {
-            const response = await axios.post('http://127.0.0.1:8000/api-token-auth/', { 
+            // --- INÍCIO DA MUDANÇA ---
+            // 2. Trocado axios.post pela nossa instância 'api'
+            //    Agora ele vai usar a URL correta (local ou produção).
+            const response = await api.post('api-token-auth/', { 
                 username, 
                 password 
             });
+            // --- FIM DA MUDANÇA ---
             
             const token = response.data.token;
             localStorage.setItem('token', token);
             api.defaults.headers.common['Authorization'] = `Token ${token}`;
 
-            // --- INÍCIO DA MUDANÇA ---
-            
-            // 5. Descobrir quem logou (Admin E Cargo)
-            const userResponse = await api.get('users/me/');
+            const userResponse = await api.get('api/users/me/'); // (Caminho completo da API)
             const isSuperUser = userResponse.data.is_superuser;
             
-            // Pega o 'tipo' (cargo) do perfil. Usamos '?.' para segurança,
-            // caso 'perfil' não exista (embora devesse).
             const userTipo = userResponse.data.perfil?.tipo; 
             
-            // 6. Salvar 'isAdmin' E 'userTipo'
             localStorage.setItem('isAdmin', isSuperUser ? 'true' : 'false');
             
             if (userTipo) {
-                // Salva o cargo (Ex: 'GESTOR', 'DIRETOR', 'COLABORADOR')
                 localStorage.setItem('userTipo', userTipo); 
             }
 
-            // 7. Redirecionar baseado no cargo
             if (isSuperUser) {
-                navigate('/admin/viagens'); // Admin vai para a lista de gerenciamento
+                navigate('/admin/viagens');
             } else {
-                navigate('/despesas'); // Colaborador/Gestor/Diretor vai para a página de "Despesas"
+                navigate('/despesas');
             }
-            // --- FIM DA MUDANÇA ---
 
         } catch (err) {
             console.error("Erro no login:", err);

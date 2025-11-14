@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// 1. Define as URLs
-const productionURL = 'https://hevile-prestacao-backend.onrender.com/api/';
-const developmentURL = 'http://127.0.0.1:8000/api/';
+// --- INÍCIO DA MUDANÇA ---
+// 1. Define as URLs (sem /api/ no final)
+const productionURL = 'https://hevile-prestacao-backend.onrender.com/';
+const developmentURL = 'http://127.0.0.1:8000/';
+// --- FIM DA MUDANÇA ---
 
 const api = axios.create({
     // 2. Usa a URL de produção se o hostname NÃO for 'localhost'
