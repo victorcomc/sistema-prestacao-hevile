@@ -90,17 +90,10 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# --- Arquivos Estáticos (CSS do Admin) ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# --- INÍCIO DA CORREÇÃO ---
-# A linha abaixo foi REMOVIDA pois conflita com 'STORAGES'
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# --- FIM DA CORREÇÃO ---
 
-# --- Arquivos de Mídia (Uploads de Usuário) ---
 MEDIA_URL = '/media/'
-# MEDIA_ROOT foi removido (agora é gerenciado pelo S3)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -135,7 +128,12 @@ REST_FRAMEWORK = {
 AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_PROJECT_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
 
-AWS_STORAGE_BUCKET_NAME = 'uploads de comprovantes'
+# --- INÍCIO DA CORREÇÃO ---
+# O nome do bucket NÃO PODE ter espaços.
+# Certifique-se de que seu bucket no Supabase se chama 'uploads'
+AWS_STORAGE_BUCKET_NAME = 'uploads'
+# --- FIM DA CORREÇÃO ---
+
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co'
 AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1'
 
@@ -149,9 +147,12 @@ STORAGES = {
             "bucket_name": AWS_STORAGE_BUCKET_NAME,
         },
     },
-    "staticfiles": { # (Mantemos o whitenoise para os estáticos)
+    "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/'
+# --- INÍCIO DA CORREÇÃO ---
+# A URL de mídia também deve usar o nome correto do bucket
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1/object/public/uploads/'
+# --- FIM DA CORREÇÃO ---
