@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'core',
-    'storages', # <<< 1. ADICIONADO
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -64,7 +64,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend_prestacao.wsgi.application'
 
-# Bloco original para colar de volta
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -94,10 +93,14 @@ USE_TZ = True
 # --- Arquivos Estáticos (CSS do Admin) ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# --- INÍCIO DA CORREÇÃO ---
+# A linha abaixo foi REMOVIDA pois conflita com 'STORAGES'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# --- FIM DA CORREÇÃO ---
 
 # --- Arquivos de Mídia (Uploads de Usuário) ---
-# (MEDIA_ROOT foi REMOVIDO)
+MEDIA_URL = '/media/'
+# MEDIA_ROOT foi removido (agora é gerenciado pelo S3)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -127,18 +130,15 @@ REST_FRAMEWORK = {
     ]
 }
 
-# --- INÍCIO DA MUDANÇA (ARMAZENAMENTO DE MÍDIA - SUPABASE S3) ---
+# --- ARMAZENAMENTO DE MÍDIA (SUPABASE S3) ---
 
-# 1. Configurações de chaves (lidas do Render)
 AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_PROJECT_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
 
-# 2. Configurações do Bucket
-AWS_STORAGE_BUCKET_NAME = 'uploads' # O nome do bucket que você criou
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co' # O host do seu Supabase
+AWS_STORAGE_BUCKET_NAME = 'uploads'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co'
 AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1'
 
-# 3. Configuração do Django Storages
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
@@ -154,6 +154,4 @@ STORAGES = {
     },
 }
 
-# 4. URL de Mídia (para onde as imagens vão apontar)
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/'
-# --- FIM DA MUDANÇA ---
