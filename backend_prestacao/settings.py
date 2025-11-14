@@ -93,8 +93,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# (MEDIA_ROOT não é mais usado)
-# MEDIA_URL será definido abaixo
+MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -106,8 +105,8 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 if RENDER_EXTERNAL_HOSTNAME:
-    CORS_ALLOWED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+    CORS_ALLOWED_ORIGINS.append(f"https{RENDER_EXTERNAL_HOSTNAME}")
+    CSRF_TRUSTED_ORIGINS.append(f"https{RENDER_EXTERNAL_HOSTNAME}")
 
 NETLIFY_URL = os.environ.get('NETLIFY_URL')
 if NETLIFY_URL:
@@ -131,17 +130,17 @@ SUPABASE_PROJECT_ID = os.environ.get('SUPABASE_PROJECT_ID')
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
 
 # 2. Define as chaves de acesso para o S3
-#    Para o Supabase, a "Access Key" é o ID do Projeto
-AWS_ACCESS_KEY_ID = SUPABASE_PROJECT_ID
-#    E a "Secret Key" é a Service Role Key
+#    Para o Supabase, a "Access Key" e a "Secret Key" são a MESMA COISA.
+AWS_ACCESS_KEY_ID = SUPABASE_SERVICE_KEY
 AWS_SECRET_ACCESS_KEY = SUPABASE_SERVICE_KEY
 
 # 3. Define as URLs do Supabase
 AWS_STORAGE_BUCKET_NAME = 'uploads'
 AWS_S3_ENDPOINT_URL = f'https://{SUPABASE_PROJECT_ID}.supabase.co/storage/v1'
+AWS_S3_CUSTOM_DOMAIN = f'{SUPABASE_PROJECT_ID}.supabase.co' # Adicionado
 
 # 4. Define a URL PÚBLICA dos seus arquivos (para o frontend ler)
-MEDIA_URL = f'https://{SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/'
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/'
 
 # 5. Define as configurações do django-storages
 STORAGES = {
