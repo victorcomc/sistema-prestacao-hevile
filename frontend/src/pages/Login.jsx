@@ -1,9 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import axios from 'axios'; // <<< 1. REMOVIDO
-import api from '../services/api'; // Precisamos dele para configurar o token E chamar o 'me'
+// import axios from 'axios'; // Não precisamos mais do axios direto
+import api from '../services/api'; // Esta é a nossa instância principal (para /api/...)
 import { Container, Paper, TextField, Button, Typography, Box, Alert } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+
+// --- INÍCIO DA CORREÇÃO ---
+// 1. Criamos uma URL raiz separada SÓ PARA O LOGIN
+const rootURL = window.location.hostname === 'localhost' 
+    ? 'http://127.0.0.1:8000/' 
+    : 'https://hevile-prestacao-backend.onrender.com/';
+// --- FIM DA CORREÇÃO ---
+
 
 function Login() {
     const [username, setUsername] = useState('');
@@ -17,22 +25,25 @@ function Login() {
         setError('');
 
         try {
-            // --- INÍCIO DA MUDANÇA ---
-            // 2. Trocado axios.post pela nossa instância 'api'
-            //    Agora ele vai usar a URL correta (local ou produção).
-            const response = await api.post('api-token-auth/', { 
+            // --- INÍCIO DA CORREÇÃO ---
+            // 2. Fazemos a chamada de login para a ROTA RAIZ
+            //    usando a URL que acabamos de definir.
+            const response = await api.post(`${rootURL}api-token-auth/`, { 
                 username, 
                 password 
             });
-            // --- FIM DA MUDANÇA ---
+            // --- FIM DA CORREÇÃO ---
             
             const token = response.data.token;
             localStorage.setItem('token', token);
             api.defaults.headers.common['Authorization'] = `Token ${token}`;
 
-            const userResponse = await api.get('api/users/me/'); // (Caminho completo da API)
-            const isSuperUser = userResponse.data.is_superuser;
+            // --- INÍCIO DA CORREÇÃO ---
+            // 3. Esta chamada usa a instância 'api' normal (que já tem /api/ na baseURL)
+            const userResponse = await api.get('users/me/'); 
+            // --- FIM DA CORREÇÃO ---
             
+            const isSuperUser = userResponse.data.is_superuser;
             const userTipo = userResponse.data.perfil?.tipo; 
             
             localStorage.setItem('isAdmin', isSuperUser ? 'true' : 'false');
