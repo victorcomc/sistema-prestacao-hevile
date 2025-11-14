@@ -93,7 +93,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = '/media/'
+# (MEDIA_ROOT não é mais usado)
+# MEDIA_URL será definido abaixo
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -123,34 +124,39 @@ REST_FRAMEWORK = {
     ]
 }
 
-# --- ARMAZENAMENTO DE MÍDIA (SUPABASE S3) ---
+# --- INÍCIO DA CORREÇÃO (ARMAZENAMENTO DE MÍDIA - SUPABASE S3) ---
 
-AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_PROJECT_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
+# 1. Pega as variáveis de ambiente que você configurou no Render
+SUPABASE_PROJECT_ID = os.environ.get('SUPABASE_PROJECT_ID')
+SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY')
+
+# 2. Define as chaves de acesso para o S3
+#    Para o Supabase, a "Access Key" é o ID do Projeto
+AWS_ACCESS_KEY_ID = SUPABASE_PROJECT_ID
+#    E a "Secret Key" é a Service Role Key
+AWS_SECRET_ACCESS_KEY = SUPABASE_SERVICE_KEY
+
+# 3. Define as URLs do Supabase
 AWS_STORAGE_BUCKET_NAME = 'uploads'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_ACCESS_KEY_ID}.supabase.co'
-AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1'
+AWS_S3_ENDPOINT_URL = f'https://{SUPABASE_PROJECT_ID}.supabase.co/storage/v1'
 
-# --- INÍCIO DA CORREÇÃO (Erro 500 no Upload) ---
-# Adiciona a Região (o Supabase usa a região 'us-west-2' do seu pooler)
-AWS_S3_REGION_NAME = 'us-west-2' 
-# --- FIM DA CORREÇÃO ---
+# 4. Define a URL PÚBLICA dos seus arquivos (para o frontend ler)
+MEDIA_URL = f'https://{SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}/'
 
+# 5. Define as configurações do django-storages
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
             "endpoint_url": AWS_S3_ENDPOINT_URL,
-            # --- INÍCIO DA CORREÇÃO (Nomes das Chaves) ---
-            "aws_access_key_id": AWS_ACCESS_KEY_ID,     # <- Estava 'access_key'
-            "aws_secret_access_key": AWS_SECRET_ACCESS_KEY, # <- Estava 'secret_key'
-            # --- FIM DA CORREÇÃO ---
+            "aws_access_key_id": AWS_ACCESS_KEY_ID,
+            "aws_secret_access_key": AWS_SECRET_ACCESS_KEY,
             "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "file_overwrite": False, # Não sobrescrever arquivos com mesmo nome
         },
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/storage/v1/object/public/uploads/'
+# --- FIM DA CORREÇÃO ---
